@@ -11,7 +11,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - chromadb
+      chromadb:
+        condition: service_healthy # Wait for ChromaDB to be healthy
     networks:
       - resume_network
 
@@ -36,6 +37,11 @@ services:
       - "8001:8000"
     volumes:
       - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - resume_network
 

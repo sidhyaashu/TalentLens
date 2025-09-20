@@ -5,26 +5,34 @@ from langchain.schema.output_parser import StrOutputParser
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from fuzzywuzzy import fuzz
+import re
+import logging
 
-# Load spaCy model
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    print("Downloading 'en_core_web_sm' model...")
-    from spacy.cli import download
-    download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+# --- Lazy Loading for spaCy model ---
+nlp_model = None
+
+def get_spacy_model():
+    """Loads and returns the spaCy model, downloading if necessary."""
+    global nlp_model
+    if nlp_model is None:
+        try:
+            nlp_model = spacy.load("en_core_web_sm")
+        except OSError:
+            logging.info("Downloading spaCy model 'en_core_web_sm'...")
+            from spacy.cli import download
+            download("en_core_web_sm")
+            nlp_model = spacy.load("en_core_web_sm")
+    return nlp_model
+# ---
 
 def hard_match_score(resume_text: str, jd_text: str) -> float:
     """Calculates a score based on keyword matching."""
     try:
-        # 1. TF-IDF Cosine Similarity
         vectorizer = TfidfVectorizer().fit_transform([resume_text, jd_text])
         vectors = vectorizer.toarray()
         tfidf_similarity = cosine_similarity(vectors)[0, 1]
 
-        # 2. Fuzzy Match for key skills (example)
-        jd_skills = ["python", "fastapi", "machine learning", "docker", "react", "aws", "sql"]
+        jd_skills = ["python", "fastapi", "machine learning", "docker", "react", "aws", "sql"] # Example skills
         resume_lower = resume_text.lower()
         fuzzy_score = sum(fuzz.partial_ratio(skill, resume_lower) > 80 for skill in jd_skills)
         fuzzy_normalized = (fuzzy_score / len(jd_skills)) if jd_skills else 0
@@ -32,9 +40,8 @@ def hard_match_score(resume_text: str, jd_text: str) -> float:
         final_score = (tfidf_similarity * 0.7) + (fuzzy_normalized * 0.3)
         return min(final_score * 100, 100.0)
     except Exception as e:
-        print(f"Error in hard_match_score: {e}")
+        logging.error(f"Error in hard_match_score: {e}", exc_info=True)
         return 0.0
-
 
 def llm_analysis(resume_text: str, jd_text: str, api_key: str, llm_model: str):
     """Uses an LLM to perform semantic analysis, gap identification, and feedback generation."""
@@ -45,11 +52,9 @@ def llm_analysis(resume_text: str, jd_text: str, api_key: str, llm_model: str):
         You are an expert AI recruitment assistant. Your task is to analyze a resume against a job description.
         Provide a detailed analysis in the following structured format. Do not include any other text, greetings, or explanations.
 
-        **SEMANTIC_SCORE:** [Provide a score from 0 to 100 representing the semantic similarity and contextual fit. Base this on experience, project relevance, and overall alignment, not just keywords.]
-
-        **MISSING_ELEMENTS:** [List the key skills, qualifications, or experiences mentioned in the job description that are missing from the resume. Be specific and use bullet points.]
-
-        **IMPROVEMENT_SUGGESTIONS:** [Offer personalized, actionable feedback for the candidate to improve their resume for this specific role. Use bullet points.]
+        **SEMANTIC_SCORE:** [Provide a score from 0 to 100 representing the semantic similarity and contextual fit.]
+        **MISSING_ELEMENTS:** [List the key skills, qualifications, or experiences from the JD that are missing from the resume.]
+        **IMPROVEMENT_SUGGESTIONS:** [Offer actionable feedback for the candidate to improve their resume for this role.]
 
         ---
         JOB DESCRIPTION:
@@ -62,31 +67,33 @@ def llm_analysis(resume_text: str, jd_text: str, api_key: str, llm_model: str):
         
         prompt = PromptTemplate.from_template(template)
         chain = prompt | llm | StrOutputParser()
-        
         response = chain.invoke({"jd": jd_text, "resume": resume_text})
         
-        # Parse the structured response
-        semantic_score_str = response.split("**SEMANTIC_SCORE:**")[1].split("**MISSING_ELEMENTS:**")[0].strip()
-        missing_elements = response.split("**MISSING_ELEMENTS:**")[1].split("**IMPROVEMENT_SUGGESTIONS:**")[0].strip()
-        improvement_suggestions = response.split("**IMPROVEMENT_SUGGESTIONS:**")[1].strip()
+        # Robustly parse the structured response using regex
+        score_match = re.search(r"\*\*SEMANTIC_SCORE:\*\*\s*\[?(\d{1,3}(?:\.\d+)?)\]?", response)
+        semantic_score = float(score_match.group(1)) if score_match else 0.0
+
+        missing_match = re.search(r"\*\*MISSING_ELEMENTS:\*\*(.*?)\*\*IMPROVEMENT_SUGGESTIONS:\*\*", response, re.DOTALL)
+        missing_elements = missing_match.group(1).strip() if missing_match else "Could not parse missing elements from the response."
+
+        suggestions_match = re.search(r"\*\*IMPROVEMENT_SUGGESTIONS:\*\*(.*)", response, re.DOTALL)
+        improvement_suggestions = suggestions_match.group(1).strip() if suggestions_match else "Could not parse improvement suggestions from the response."
 
         return {
-            "semantic_score": float(semantic_score_str),
+            "semantic_score": semantic_score,
             "missing_elements": missing_elements,
             "improvement_suggestions": improvement_suggestions
         }
     except Exception as e:
-        print(f"Error during LLM analysis: {e}")
+        logging.error(f"Error during LLM analysis: {e}", exc_info=True)
         return {
             "semantic_score": 0.0,
-            "missing_elements": "Error during LLM analysis. Please check the API key and model availability.",
-            "improvement_suggestions": "Could not generate suggestions due to an error."
+            "missing_elements": "An error occurred during LLM analysis. Please check the server logs and API key.",
+            "improvement_suggestions": "Could not generate suggestions due to an internal error."
         }
 
-
-def calculate_final_score_and_verdict(hard_score: float, semantic_score: float):
+def calculate_final_score_and_verdict(hard_score: float, semantic_score: float) -> tuple[float, str]:
     """Calculates the final weighted score and provides a verdict."""
-    # Weights can be tuned (e.g., 40% hard match, 60% semantic match)
     final_score = (hard_score * 0.4) + (semantic_score * 0.6)
     
     verdict = "Low"

@@ -27,3 +27,6 @@ sentence-transformers
 # Utilities
 pydantic
 python-dotenv
+
+# Production Server
+gunicorn

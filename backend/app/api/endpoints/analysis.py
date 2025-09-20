@@ -1,7 +1,9 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header
 from ...services import document_parser, scoring_engine
+from ...services import vector_store as vs
 from ...schemas.models import AnalysisResponse
 import uuid
+import logging
 
 router = APIRouter()
 
@@ -23,7 +25,7 @@ async def analyze_resume(
         resume_text = document_parser.parse_document(resume.filename, resume_bytes)
         
         if not resume_text.strip():
-            raise HTTPException(status_code=500, detail=f"Could not extract text from resume: {resume.filename}")
+            raise HTTPException(status_code=400, detail=f"Could not extract text from resume: {resume.filename}")
         
         # 1. Hard Match Scoring
         hard_score = scoring_engine.hard_match_score(resume_text, jd)
@@ -36,10 +38,10 @@ async def analyze_resume(
             hard_score, llm_results["semantic_score"]
         )
         
-        # Optional: Add the processed resume to the vector store for future search
+        # 4. Add the processed resume to the vector store
         doc_id = str(uuid.uuid4())
         metadata = {"filename": resume.filename, "score": final_score, "verdict": verdict}
-        scoring_engine.vector_store.add_document(doc_id, resume_text, metadata)
+        vs.vector_store.add_document(doc_id, resume_text, metadata)
 
         return AnalysisResponse(
             relevance_score=final_score,
@@ -51,4 +53,5 @@ async def analyze_resume(
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+        logging.error(f"Unexpected error during analysis for {resume.filename}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An unexpected internal error occurred. Please check the server logs.")

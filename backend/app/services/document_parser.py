@@ -1,6 +1,7 @@
 import fitz  # PyMuPDF
 from docx import Document
 import io
+import logging
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """Extracts text content from a PDF file."""
@@ -12,7 +13,7 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
             text += page.get_text()
         return text
     except Exception as e:
-        print(f"Error parsing PDF: {e}")
+        logging.error(f"Error parsing PDF: {e}", exc_info=True)
         return ""
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
@@ -22,7 +23,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
         text = "\n".join([para.text for para in document.paragraphs])
         return text
     except Exception as e:
-        print(f"Error parsing DOCX: {e}")
+        logging.error(f"Error parsing DOCX: {e}", exc_info=True)
         return ""
 
 def parse_document(file_name: str, file_bytes: bytes) -> str:
