@@ -17,5 +17,6 @@ class AnalysisResult(Base):
     verdict = Column(String)
     missing_elements = Column(Text)
     improvement_suggestions = Column(Text)
+    status = Column(String, default="New", index=True) # <-- ADD THIS LINE
     job_description_id = Column(Integer, ForeignKey("job_descriptions.id"))
     job_description = relationship("JobDescription", back_populates="analyses")

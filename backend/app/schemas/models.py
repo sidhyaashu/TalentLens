@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 # --- Analysis Schemas ---
@@ -8,6 +8,7 @@ class AnalysisResponse(BaseModel):
     missing_elements: str
     improvement_suggestions: str
     filename: str
+    status: str = "New"
 
 class AnalysisResultCreate(AnalysisResponse):
     pass
@@ -18,6 +19,10 @@ class AnalysisResult(AnalysisResponse):
 
     class Config:
         orm_mode = True
+
+# --- Status Update Schema ---
+class StatusUpdate(BaseModel):
+    status: str
 
 # --- Job Description Schemas ---
 class JobDescriptionBase(BaseModel):

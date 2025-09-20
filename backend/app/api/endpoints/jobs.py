@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from ...database import crud, models
 from ...database.database import get_db
 from ...schemas import models as schemas
@@ -17,8 +17,10 @@ def read_job_descriptions(skip: int = 0, limit: int = 100, db: Session = Depends
     return jds
 
 @router.get("/jobs/{jd_id}/results", response_model=List[schemas.AnalysisResult])
-def read_analysis_results_for_jd(jd_id: int, db: Session = Depends(get_db)):
-    results = crud.get_analysis_results_for_jd(db=db, jd_id=jd_id)
-    if not results:
-        return []
+def read_analysis_results_for_jd(
+    jd_id: int,
+    search: Optional[str] = Query(None, alias="search"),
+    db: Session = Depends(get_db)
+):
+    results = crud.get_analysis_results_for_jd(db=db, jd_id=jd_id, search=search)
     return results

@@ -37,3 +37,6 @@ alembic
 
 # HTTP Client
 httpx
+
+plotly
+notebook
