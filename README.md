@@ -68,6 +68,9 @@
 
 ![Dashboard Screenshot](assets/n8n.png "Notification service")
 
+📥 [Download n8n workflow](assets/Lens.json)
+
+
 **Video Section**
 
 * Record a short (60–120s) screen capture showing:

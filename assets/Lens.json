@@ -1,0 +1,69 @@
+{
+  "name": "Lens",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "13777be7-74c6-47b8-b15f-bb084cb08105",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b155f82c-b4c7-4bb9-9978-8d6cd8d862d9",
+      "name": "Webhook",
+      "webhookId": "13777be7-74c6-47b8-b15f-bb084cb08105"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.email }}",
+        "subject": "=TalentLens Feedback for your Resume: {{ $json.body.filename }}",
+        "message": "=<p>Hello,</p>\n<p>Thank you for submitting your resume (<b>{{ $json.body.filename }}</b>) for analysis. Here is a summary of our automated evaluation:</p>\n\n<h3>Analysis Results</h3>\n<ul>\n    <li><b>Relevance Score:</b> {{ $json.body.score.toFixed(2) }}%</li>\n    <li><b>Verdict:</b> {{ $json.body.verdict }}</li>\n</ul>\n\n<h3>Missing Elements</h3>\n<p>Our system identified the following potential gaps when comparing your resume to the job description:</p>\n<pre>{{ $json.body.missing }}</pre>\n\n<h3>Improvement Suggestions</h3>\n<p>To better align your resume with the role, consider the following suggestions:</p>\n<pre>{{ $json.body.suggestions }}</pre>\n\n<p>We hope this feedback is helpful. Best of luck with your job search!</p>\n<p>--<br>The Placement Team</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0d7bd5c2-96ca-4e9f-a255-1e244dd83886",
+      "name": "Send a message",
+      "webhookId": "823a9b08-cfb9-4662-b477-56116bcbf081",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BBrjib7AgRlBOtgJ",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5a3ad21e-c5f2-4366-9248-28dd278c68a3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a66ed7ec9e43f366b6e33c65cd21591c5d9a25a35b247f47aa8b6072be762b6"
+  },
+  "id": "n8r6oEdKmstscOgN",
+  "tags": []
+}
