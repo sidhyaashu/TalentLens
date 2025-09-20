@@ -13,10 +13,17 @@ nlp_model = None
 
 
 def extract_email_from_text(text: str) -> str | None:
-    """Extracts the first email address found in the text."""
-    email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    """Extracts the first email address found in the text using a more robust regex."""
+    # This regex is a standard and more reliable pattern for finding email addresses.
+    email_regex = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
     match = re.search(email_regex, text)
-    return match.group(0) if match else None
+    if match:
+        email = match.group(0)
+        logging.info(f"Successfully extracted email: {email}")
+        return email
+    else:
+        logging.warning("Could not find an email address in the resume text.")
+        return None
 
 def get_spacy_model():
     """Loads and returns the spaCy model, downloading if necessary."""
