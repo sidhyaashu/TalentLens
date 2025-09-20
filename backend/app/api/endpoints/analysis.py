@@ -7,6 +7,7 @@ from ...database import crud
 from ...database.database import get_db
 import uuid
 import logging
+import asyncio
 
 router = APIRouter()
 
@@ -48,7 +49,8 @@ def perform_analysis_and_save(
         # Send feedback webhook
         student_email = scoring_engine.extract_email_from_text(resume_text)
         if student_email:
-            notification_service.send_feedback_webhook(student_email, analysis_data.dict())
+            # notification_service.send_feedback_webhook(student_email, analysis_data.dict())
+            asyncio.run(notification_service.send_feedback_webhook(student_email, analysis_data.model_dump()))
 
     except Exception as e:
         logging.error(f"Background analysis failed for {resume_filename}: {e}", exc_info=True)

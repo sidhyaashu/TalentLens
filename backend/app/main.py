@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .api.endpoints import analysis, jobs, results # <-- Import results
+from .api.endpoints import analysis,jobs,results
 from fastapi.middleware.cors import CORSMiddleware
 from .database import models
 from .database.database import engine
