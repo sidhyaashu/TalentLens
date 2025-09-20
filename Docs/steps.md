@@ -154,3 +154,8 @@ Open a single terminal in the **root directory** of your project (`sidhyaashu-ta
     ```bash
     docker-compose down
     ```
+
+
+alembic init alembic
+    alembic revision --autogenerate -m "Initial migration"
+    alembic upgrade head
