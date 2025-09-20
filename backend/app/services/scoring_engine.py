@@ -11,6 +11,13 @@ import logging
 # --- Lazy Loading for spaCy model ---
 nlp_model = None
 
+
+def extract_email_from_text(text: str) -> str | None:
+    """Extracts the first email address found in the text."""
+    email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    match = re.search(email_regex, text)
+    return match.group(0) if match else None
+
 def get_spacy_model():
     """Loads and returns the spaCy model, downloading if necessary."""
     global nlp_model

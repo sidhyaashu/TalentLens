@@ -1,6 +1,10 @@
 from fastapi import FastAPI
-from .api.endpoints import analysis
+from .api.endpoints import analysis, jobs
 from fastapi.middleware.cors import CORSMiddleware
+from .database import models
+from .database.database import engine
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Automated Resume Relevance Check System",
@@ -17,6 +21,7 @@ app.add_middleware(
 )
 
 app.include_router(analysis.router, prefix="/api", tags=["Analysis"])
+app.include_router(jobs.router, prefix="/api", tags=["Job Descriptions"])
 
 @app.get("/", tags=["Root"])
 def read_root():

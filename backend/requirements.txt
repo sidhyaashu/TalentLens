@@ -30,3 +30,10 @@ python-dotenv
 
 # Production Server
 gunicorn
+
+# Database
+sqlalchemy
+alembic
+
+# HTTP Client
+httpx
