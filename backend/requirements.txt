@@ -1,0 +1,29 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# AI & NLP Pipeline
+langchain
+langchain-google-genai
+langchain-community
+langgraph
+langsmith
+
+# Document Parsing
+pymupdf
+python-docx
+
+# Text Processing & Feature Extraction
+spacy
+fuzzywuzzy
+python-levenshtein
+scikit-learn
+
+# Vector Store
+chromadb
+sentence-transformers
+
+# Utilities
+pydantic
+python-dotenv
