@@ -8,7 +8,7 @@ class AnalysisResponse(BaseModel):
     missing_elements: str
     improvement_suggestions: str
     filename: str
-    status: str = "New"
+    status: Optional[str] = "New"
 
 class AnalysisResultCreate(AnalysisResponse):
     pass
